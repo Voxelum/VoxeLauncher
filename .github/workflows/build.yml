@@ -147,3 +147,6 @@ jobs:
         account: xmcl
         container: releases
         directory: ./build
+    - name: Update the version.js
+      run: |
+        node --eval "console.log('const version = \"' + JSON.parse(require('fs').readFileSync('package.json').toString()).version + '\"')" > docs/scripts/version.js

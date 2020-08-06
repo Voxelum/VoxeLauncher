@@ -27,14 +27,14 @@ $('#languages').dropdown({
 
 $('#source').dropdown({
     onChange: function (src, _, elem) {
-        downloadSource = elem.attr('value');
+        DOWNLOAD_SOURCE = elem.attr('value');
     }
 })
 
 /**
  * @type {'azure' | 'github' | 'auto'}
  */
-let downloadSource = 'auto';
+let DOWNLOAD_SOURCE = 'auto';
 
 $('#downloadFor').attr('data-i18n', `downloadFor.${platform.os}`);
 
@@ -54,20 +54,42 @@ function inGFW() {
 
 const isInGFW = inGFW();
 
-function getFileUrl(name, fallback) {
-    return isInGFW.then((inside) => {
-        if (inside) {
-            return `https://xmcl-release.azureedge.net/releases/${name}`;
+/**
+ * Get the file url by location. Use azure if in china mainland.
+ * @param {string} githubUrl github url.
+ * @param {string} azureUrl azure url
+ */
+function getFileUrlFromLocation(githubUrl, azureUrl) {
+    return isInGFW
+        .then((inside) => inside ? azureUrl : githubUrl)
+        .catch(() => {
+            console.log(e);
+            return githubUrl;
+        });
+}
+
+function getGithubUrl(name) { return `https://github.com/Voxelum/x-minecraft-launcher/releases/download/v${version}/${name}`; }
+function getAzureUrl(name) { return `https://xmcl-release.azureedge.net/releases/${name}`; }
+
+function setupHrefByUrl(elem, azureUrl, githubUrl) {
+    $(elem).click((event) => {
+        $(elem).addClass('loading');
+        if (DOWNLOAD_SOURCE === 'auto') {
+            getFileUrlFromLocation(azureUrl, githubUrl).then((url) => {
+                $(elem).attr('href', url);
+                $(elem).removeClass('loading');
+            })
+        } else if (DOWNLOAD_SOURCE === 'github') {
+            $(elem).attr('href', githubUrl);
+            $(elem).removeClass('loading');
         } else {
-            return fallback;
+            $(elem).attr('href', azureUrl);
+            $(elem).removeClass('loading');
         }
-    }).catch(() => {
-        console.log(e);
-        return fallback;
     });
 }
 
-function initGithubInfo() {
+function buildFromGithub() {
     let releases
     function handleReleases(inReleases) {
         releases = inReleases;
@@ -79,44 +101,15 @@ function initGithubInfo() {
             $('#prerelease').css('visibility', 'hidden');
         }
 
-        switch (platform.os.family) {
-            case 'Windows':
-                $('[win]').clone().appendTo('[main]');
-                break;
-            case 'OS X':
-                $('[mac]').clone().appendTo('[main]');
-                break;
-            case 'Ubuntu':
-            case 'Debian':
-            case 'SuSE':
-            case 'Fedora':
-            case 'Red Hat':
-                $('[linux]').clone().appendTo('[main]');
-                break;
-        }
         function setupHref(elem, find) {
             const found = latest.assets.find(find);
             if (!found) {
                 $(elem).addClass('disabled');
             } else {
-                $(elem).click((event) => {
-                    $(elem).addClass('loading');
-                    if (downloadSource === 'auto') {
-                        getFileUrl(found.name, found.browser_download_url).then((url) => {
-                            $(elem).attr('href', url);
-                            $(elem).removeClass('loading');
-                        })
-                    } else if (downloadSource === 'github') {
-                        $(elem).attr('href', found.browser_download_url);
-                        $(elem).removeClass('loading');
-                    } else {
-                        $(elem).attr('href', `https://xmcl-release.azureedge.net/releases/${found.name}`);
-                        $(elem).removeClass('loading');
-                    }
-                });
+                setupHrefByUrl(elem, getAzureUrl(found.name), found.browser_download_url);
             }
         }
-        setupHref('[win-portable]', a => a.name.indexOf('-Setup') === -1 && a.name.endsWith('.exe'));
+
         setupHref('[win-zip-32]', a => a.name.endsWith('win.zip') && a.name.indexOf('ia32') !== -1);
         setupHref('[win-zip]', a => a.name.endsWith('win.zip') && a.name.indexOf('ia32') === -1);
         setupHref('[win-setup]', a => a.name.indexOf('-Setup') !== -1 && a.name.endsWith('.exe'));
@@ -126,53 +119,45 @@ function initGithubInfo() {
         setupHref('[snap]', a => a.name.endsWith('.snap'));
         setupHref('[appimage]', a => a.name.endsWith('.AppImage'));
         setupHref('[rpm]', a => a.name.endsWith('.rpm'));
-
-        const { installer, portable, zip } = getLatestDownloadsByPlatform(latest.assets);
-        $('#download').attr('href', installer.browser_download_url);
-        if (portable) {
-            $('#download-portable').attr('href', portable.browser_download_url);
-        } else {
-            $('#download-portable').attr('disable', true).addClass('disabled');
-        }
-        if (zip) {
-            $('#download-zip').attr('href', zip.browser_download_url);
-        } else {
-            $('#download-zip').attr('disable', true).addClass('disabled');
-        }
-    }
-
-
-    function getLatestDownloadsByPlatform(assets) {
-        const os = platform.os;
-        const is64 = os.architecture === 64;
-        switch (os.family) {
-            case 'Windows':
-                return {
-                    installer: assets.find(a => a.name.indexOf('-Setup-') !== -1 && a.name.endsWith('.exe')),
-                    portable: assets.find(a => a.name.indexOf('-Setup-') === -1 && a.name.endsWith('.exe')),
-                    zip: is64 ? assets.find(a => a.name.endsWith('win.zip') && a.name.indexOf('ia32') === -1)
-                        : assets.find(a => a.name.endsWith('win.zip') && a.name.indexOf('ia32') !== -1),
-                };
-            case 'OS X':
-                return {
-                    installer: assets.find(a => a.name.endsWith('.dmg')),
-                    zip: assets.find(a => a.name.endsWith('mac.zip')),
-                }
-            case 'Linux':
-                return {
-                    installer: assets.find(a => a.name.endsWith('.AppImage')),
-                    portable: assets.find(a => a.name.endsWith('.snap')),
-                }
-        }
-        return '';
     }
 
     fetch('https://api.github.com/repos/voxelum/x-minecraft-launcher/releases')
-        .then(resp => {
-            return resp.json()
-        })
+        .then(resp => resp.json())
         .then(handleReleases);
 }
 
+function buildByVersion() {
+    $('#version').text(`v${version}`);
+    function setupHref(elem, name) {
+        setupHrefByUrl(elem, getAzureUrl(name), getGithubUrl(name));
+    }
 
-initGithubInfo();
+    setupHref('[win-zip-32]', `xmcl-${version}-ia32-win.zip`);
+    setupHref('[win-zip]', `xmcl-${version}-win.zip`);
+    setupHref('[win-setup]', `xmcl-Setup-${version}.exe`);
+    setupHref('[mac-zip]', `xmcl-${version}-mac.zip`);
+    setupHref('[dmg]', `xmcl-${version}.dmg`);
+    setupHref('[deb]', `x-minecraft-launcher_${version}_amd64.deb`);
+    setupHref('[snap]', `x-minecraft-launcher_${version}_amd64.snap`);
+    setupHref('[appimage]', `xmcl-${version}.AppImage`);
+    setupHref('[rpm]', `x-minecraft-launcher-${version}.x86_64.rpm`);
+}
+
+
+switch (platform.os.family) {
+    case 'Windows':
+        $('[win]').clone().appendTo('[main]');
+        break;
+    case 'OS X':
+        $('[mac]').clone().appendTo('[main]');
+        break;
+    case 'Ubuntu':
+    case 'Debian':
+    case 'SuSE':
+    case 'Fedora':
+    case 'Red Hat':
+        $('[linux]').clone().appendTo('[main]');
+        break;
+}
+buildByVersion();
+buildFromGithub();
