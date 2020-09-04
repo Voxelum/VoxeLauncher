@@ -29,19 +29,23 @@ export default defineComponent({
     const self: Ref<any> = ref(null);
     function toggleBar(force?: boolean) {
       if (force) {
-        show.value = false;
-        return;
+        if (show.value) {
+          show.value = false;
+          return true;
+        } 
+        return false;
       }
       if (show.value && !focused.value) {
         nextTick(() => {
           self.value.focus();
         });
-      } else {
-        show.value = !show.value;
-        nextTick(() => {
-          self.value.focus();
-        });
-      }
+        return true;
+      } 
+      show.value = !show.value;
+      nextTick(() => {
+        self.value.focus();
+      });
+      return true;
     }
     useSearchToggle(toggleBar);
     return {

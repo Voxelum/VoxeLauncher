@@ -12,6 +12,18 @@ Vue.directive('draggable-card', (el) => {
     el.addEventListener('dragend', removeClass);
 });
 
+Vue.directive('selectable-card', (el) => {
+    el.addEventListener('mousedown', () => {
+        el.classList.add('selected');
+    });
+    const removeClass = () => {
+        el.classList.remove('selected');
+    };
+    el.addEventListener('mouseup', removeClass);
+    el.addEventListener('mouseleave', removeClass);
+    el.addEventListener('dragend', removeClass);
+});
+
 Vue.directive('data-transfer', (el, binding) => {
     el.addEventListener('dragstart', (e) => {
         e.dataTransfer!.setData(binding.arg!, binding.value);

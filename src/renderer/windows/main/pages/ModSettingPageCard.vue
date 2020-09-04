@@ -2,6 +2,8 @@
   <v-card
     ref="card"
     v-draggable-card
+    v-selectable-card
+    v-long-press="emitSelect"
     hover
     :draggable="!enabled"
     :dark="!source.subsequence"
@@ -20,21 +22,22 @@
     @mouseenter="hoveringMod = source.id"
     @mouseleave="hoveringMod = ''"
     @contextmenu="tryOpen"
-    @click="$emit('click', $event);"
+    @click="$emit('click', $event)"
   >
     <v-tooltip top>
       <template v-slot:activator="{ on }">
-        <v-layout
-          justify-center
-          align-center
-          fill-height
+        <transition-group
+          class="layout justify-center align-center fill-height"
+          name="transition-list"
+          tag="div"
           v-on="on"
         >
-          <!-- <v-flex style="flex-grow: 0">
-            <v-checkbox></v-checkbox>
-          </v-flex>-->
+          <v-flex v-if="selectionMode" :key="0" style="flex-grow: 0">
+            <v-checkbox :value="selected"></v-checkbox>
+          </v-flex>
           <v-flex
             v-if="!source.subsequence"
+            :key="1"
             style="margin: 0 10px 0 0; min-height: 126px; max-height: 126px; max-width: 126px; min-width; 126px"
           >
             <img
@@ -45,7 +48,7 @@
               contain
             />
           </v-flex>
-          <v-flex style="padding: 10px 0; flex-grow: 1">
+          <v-flex :key="2" style="padding: 10px 0; flex-grow: 1">
             <h3 v-if="!source.subsequence">{{ source.name }}</h3>
             <v-chip
               small
@@ -76,10 +79,10 @@
             </v-chip>
             <div style="color: #bdbdbd; ">{{ source.description }}</div>
           </v-flex>
-          <v-flex style="flex-grow: 0">
-            <v-switch v-model="enabled"></v-switch>
+          <v-flex :key="3" style="flex-grow: 0" @click.stop>
+            <v-switch :value="enabled" @change="emitEnable" ></v-switch>
           </v-flex>
-        </v-layout>
+        </transition-group>
       </template>
       {{ compatibleText }}
       <v-divider />
@@ -98,11 +101,11 @@ import { useContextMenu, ContextMenuItem, useCurseforgeRoute, useMcWikiRoute } f
 export default defineComponent({
   props: {
     source: required<ModItem>(Object),
+    selected: required<boolean>(Boolean),
+    enabled: required<boolean>(Boolean),
   },
   setup(props, context) {
     const { minecraft, forge } = useInstanceVersionBase();
-    const enabled = ref(props.source.enabled);
-
     const { compatible: mcCompatible } = useCompatible(computed(() => props.source.acceptVersion),
       minecraft, true);
     const { compatible: loaderCompatible } = useCompatible(computed(() => props.source.acceptLoaderVersion),
@@ -130,9 +133,10 @@ export default defineComponent({
     const modified = inject('Modified', ref([] as ModItem[]));
     const isDraggingMod = inject('DraggingMod', ref(false));
     const hoveringMod = inject('HoveringMod', ref(''));
+    const selectionMode = inject('SelectionMode', ref(false));
+
     const { searchProjectAndRoute, goProjectAndRoute } = useCurseforgeRoute();
     const { searchProjectAndRoute: searchMcWiki } = useMcWikiRoute(); 
-
     const { $t } = useI18n();
 
     const compatibleText = computed(() => {
@@ -144,23 +148,8 @@ export default defineComponent({
           : $t('mod.incompatible');
       return compatibleText + acceptVersionText;
     });
-
-    watch([enabled, computed(() => props.source.enabled)], ([newValue], old) => {
-      if (typeof old === 'undefined') return;
-      if (enabled.value !== props.source.enabled) {
-        modified.value.push({ ...props.source, enabled: newValue });
-      } else {
-        modified.value = modified.value.filter((m) => m.id !== props.source.id);
-      }
-    });
-
-    // useDragTransferItemMutable(
-    //   computed(() => card.value?.$el as HTMLElement),
-    //   computed(() => ({ side: props.isSelected ? 'right' : 'left', id: props.source.url })),
-    // );
-
     function onDragStart(e: DragEvent) {
-      if (props.source.enabled) {
+      if (props.enabled) {
         return;
       }
       if (iconImage.value) {
@@ -179,7 +168,7 @@ export default defineComponent({
       context.emit('dragstart', e);
     }
     function onDragEnd() {
-      if (props.source.enabled) {
+      if (props.enabled) {
         return;
       }
       isDraggingMod.value = true;
@@ -233,6 +222,13 @@ export default defineComponent({
       });
       open(e.clientX, e.clientY, items);
     }
+    function emitSelect() {
+      context.emit('select');
+    }
+    function emitEnable(event: any) {
+      console.log(event);
+      context.emit('enable', event);
+    }
 
     return {
       card,
@@ -243,12 +239,15 @@ export default defineComponent({
       minecraft,
       tryOpen,
       basename,
-      enabled,
       hoveringMod,
       unknownPack,
 
       mcCompatible,
       compatibleText,
+      selectionMode,
+      emitSelect,
+      emitEnable,
+      modified,
     };
   },
 });

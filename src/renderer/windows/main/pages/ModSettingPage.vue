@@ -3,7 +3,7 @@
     fill-height
     style="overflow: auto;"
     @dragend="draggingMod = false"
-    @dragover.prevent
+    @dragover.prevent="onDragOver"
     @drop="onDropToImport"
   >
     <v-layout
@@ -63,6 +63,7 @@
           <transition-group
             name="transition-list"
             tag="div"
+            :class="{ 'selection-mode': selectionMode }"
           >
             <mod-card
               v-for="(item, index) in items"
@@ -70,6 +71,11 @@
               v-observe-visibility="(visible) => onVisible(visible, index)"
               :source="item"
               class="list-item"
+              :selected="isSelected(item)"
+              :enabled="isEnabled(item)"
+              @select="select(item)"
+              @click="onClick($event, index)"
+              @enable="enableMod(item, $event)"
             />
           </transition-group>
         </v-list>
@@ -99,7 +105,7 @@
 
 <script lang=ts>
 import VirtualList from 'vue-virtual-scroll-list';
-import { defineComponent, reactive, toRefs, computed, ref, Ref, provide, watch } from '@vue/composition-api';
+import { defineComponent, reactive, toRefs, computed, ref, Ref, provide, watch, onMounted, onUnmounted } from '@vue/composition-api';
 import { ForgeResource, LiteloaderResource } from '@universal/util/resource';
 import {
   useInstanceMods,
@@ -113,6 +119,8 @@ import {
 } from '@/hooks';
 import { isCompatible } from '@universal/util/version';
 import { useLocalStorageCacheBool } from '@/hooks/useCache';
+import { filter } from 'fuzzy';
+import { set } from '@universal/util/middleware';
 import { useSearchToggles, useSearch } from '../hooks';
 import ModCard from './ModSettingPageCard.vue';
 import DeleteView from './ModSettingPageDeleteView.vue';
@@ -125,6 +133,64 @@ function useDragMod() {
   provide('DraggingMod', draggingMod);
   return {
     draggingMod,
+  };
+}
+
+function setupSelection(items: Ref<ModItem[]>) {
+  const selectionMode = ref(false);
+  provide('SelectionMode', selectionMode);
+  const selectedItems = reactive({} as Record<string, boolean>);
+  const selectedMods = computed(() => items.value.filter(i => selectedItems[i.hash]));
+  watch(items, (arr) => {
+    console.log('watch trigger');
+    for (const m of arr) {
+      if (!(m.hash in selectedItems)) {
+        selectedItems[m.hash] = false;
+      }
+    }
+  });
+ 
+  function select(...mod: ModItem[]) {
+    if (!selectionMode.value) {
+      selectionMode.value = true;
+    }
+    for (const m of mod) {
+      selectedItems[m.hash] = !selectedItems[m.hash];
+    }
+  }
+  function selectOrUnselect(mod: ModItem) {
+    if (selectionMode.value) {
+      selectedItems[mod.hash] = !selectedItems[mod.hash];
+    }
+  }
+  function isSelected(mod: ModItem) {
+    if (!(mod.hash in selectedItems)) {
+      set(selectedItems, mod.hash, false);
+    }
+    return selectedItems[mod.hash];
+  }
+  let lastIndex = -1;
+  function onClick(event: MouseEvent, index: number) {
+    if (lastIndex !== -1 && event.shiftKey) {
+      let min = lastIndex;
+      let max = index;
+      if (lastIndex > index) {
+        max = lastIndex;
+        min = index;
+      }
+      select(...items.value.slice(min + 1, max));
+    }
+    selectOrUnselect(items.value[index]);
+    lastIndex = index;
+  }
+  return {
+    onClick,
+    select,
+    selectOrUnselect,
+    selectedItems,
+    selectionMode,
+    isSelected,
+    selectedMods,
   };
 }
 
@@ -154,23 +220,16 @@ export default defineComponent({
       removeResource(mod!.hash);
     });
 
+    
     const mods = computed(() => [
       ...enabled.value,
       ...disabled.value,
     ]);
 
-    let modifiedList = ref([] as ModItem[]);
+    const modifiedList = ref([] as ModItem[]);
     provide('Modified', modifiedList);
     const modified = computed(() => modifiedList.value.length > 0);
 
-
-    // useDropImport(computed(() => leftList.value?.$el as HTMLElement), 'mods');
-
-    function filterText(mod: ModItem) {
-      const text = filteredText.value;
-      if (!text) return true;
-      return mod.name.toLowerCase().indexOf(text.toLowerCase()) !== -1;
-    }
     function isCompatibleMod(mod: ModItem) {
       if (data.filterInCompatible) {
         return isCompatible(mod.acceptVersion, minecraft.value);
@@ -194,13 +253,34 @@ export default defineComponent({
       }
       return list;
     }
-    const items = computed(() => mods.value
-      .filter(filterText)
+    const items = computed(() => filter(filteredText.value, mods.value, { extract: v => v.name })
+      .map((r) => r.original)
       .filter(isCompatibleMod)
       .reduce(isDuplicated, [])
-      // .sort((a, b) => (a.enabled ? 1 : b.enabled ? 0 : 1))
       .filter((m, i) => i < data.visibleCount));
+    const selection = setupSelection(items);
+    const { selectionMode, selectedMods, isSelected } = selection;
 
+    function enableMod(mod: ModItem, value: boolean) {
+      value = !!value;
+      const update = (m: ModItem, newValue: boolean) => {
+        if (newValue !== m.enabled && modifiedList.value.every(i => i.id !== m.id)) {
+          modifiedList.value.push({ ...m, enabled: newValue });
+        } else if (newValue === m.enabled && modifiedList.value.some(i => i.id === m.id)) {
+          modifiedList.value = modifiedList.value.filter((v) => v.id !== m.id);
+        }
+      };
+      if (selectionMode.value && isSelected(mod)) {
+        for (const mod of selectedMods.value) {
+          update(mod, value);
+        }
+      } else {
+        update(mod, value);
+      } 
+    }
+    function isEnabled(mod: ModItem) {
+      return modifiedList.value.some((i) => i.id === mod.id);
+    }
     function save() {
       if (data.saving) return;
       data.saving = true;
@@ -230,7 +310,20 @@ export default defineComponent({
         data.visibleCount += 20;
       }
     }
-
+    function onDragOver(event: DragEvent) {
+      console.log(event);
+    }
+    function onKeyup(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        selectionMode.value = false;
+      }
+    }
+    onMounted(() => {
+      document.addEventListener('keyup', onKeyup);
+    });
+    onUnmounted(() => {
+      document.removeEventListener('keyup', onKeyup);
+    });
     return {
       ...toRefs(data),
       ...useDragMod(),
@@ -245,12 +338,17 @@ export default defineComponent({
 
       onDropMod,
       onDropToImport,
+      onDragOver,
       setFilteredModid,
       toggle,
       ModCard,
-
       save,
       modified,
+
+      enableMod,
+      isEnabled,
+      
+      ...selection,
     };
   },
 });
