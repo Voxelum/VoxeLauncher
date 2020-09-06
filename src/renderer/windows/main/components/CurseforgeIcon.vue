@@ -20,7 +20,7 @@ export default {
 </script>
 
 <style>
-#curseforge-icon {
-  fill: currentColor;
+#curseforge-icon .st0 {
+  fill: white;
 }
 </style>

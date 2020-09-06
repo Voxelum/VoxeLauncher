@@ -4,6 +4,7 @@
     dark
     style="background: transparent;"
   >
+    <universal-drop-view />
     <v-container
       v-if="loading"
       color="primary"
@@ -46,7 +47,6 @@
             <router-view />
             <!-- </keep-alive> -->
           </transition>
-          <!-- </v-card> -->
         </div>
       </v-layout>
       <context-menu />
@@ -116,6 +116,7 @@ export default defineComponent({
 
     const data = reactive({
       loading: true,
+      over: false,
     });
 
     function refreshImage() {

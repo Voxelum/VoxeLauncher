@@ -20,6 +20,11 @@ import Vuex from 'vuex';
 import './directives';
 import components from './components';
 import CurseforgeIcon from './components/CurseforgeIcon.vue';
+import ZipFileIcon from './components/ZipFileIcon.vue';
+import JarFileIcon from './components/JarFileIcon.vue';
+import PackageFileIcon from './components/PackageFileIcon.vue';
+import ForgeIcon from './components/ForgeIcon.vue';
+import FabricIcon from './components/FabricIcon.vue';
 import MainWindow from './MainWindow.vue';
 import router from './router';
 
@@ -31,6 +36,21 @@ function configApp(app: App) {
         icons: {
             curseforge: {
                 component: CurseforgeIcon,
+            },
+            zip: {
+                component: ZipFileIcon,
+            },
+            jar: {
+                component: JarFileIcon,
+            },
+            package: {
+                component: PackageFileIcon,
+            },
+            forge: {
+                component: ForgeIcon,
+            },
+            fabric: {
+                component: FabricIcon,
             },
         },
         theme: {

@@ -7,7 +7,7 @@ import { useStore } from './useStore';
 
 export function useResourceOperation() {
     return {
-        ...useServiceOnly('ResourceService', 'importResource', 'removeResource'),
+        ...useServiceOnly('ResourceService', 'importResource', 'removeResource', 'parseFileAsResource'),
     };
 }
 

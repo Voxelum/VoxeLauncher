@@ -83,6 +83,8 @@ export default defineComponent({
     useDragTransferItem(computed(() => card.value?.$el as HTMLElement), props.pack.id, props.isSelected ? 'right' : 'left');
 
     function onDragStart(e: DragEvent) {
+      // e.dataTransfer!.dropEffect = 'move';
+      e.dataTransfer!.effectAllowed = 'move';
       if (props.pack.id !== 'vanilla') {
         context.emit('dragstart', e);
       }

@@ -194,6 +194,7 @@
     }
   },
   "downloadUpdate": "下载更新",
+  "dropToImport": "将文件拖到这并导入为",
   "edit": "编辑",
   "fabric": {
     "disable": "不启用 Fabric",
@@ -505,7 +506,8 @@
     "backToAllMods": "返回所有 Mods",
     "compatible": "可用于当前版本。",
     "deletion": "删除 Mod",
-    "deletionHint": "你将失去这个 Mod 的文件和信息。你确定吗？",
+    "deletionHint": "你将移除这个 Mod 的文件和信息。你确定吗？| 你将移除这些 Mod 的文件和信息。你确定吗？",
+    "deletionRestHint": "等 {rest} 个模组……",
     "export": "导出 Mod",
     "hideIncompatible": "隐藏不兼容 Mods",
     "hint": "将Mod的jar文件拖入此处来导入",
@@ -526,6 +528,7 @@
     "nocompatible": "无法解析兼容性。",
     "openLink": "打开 Mod 链接 {url}",
     "searchOnCurseforge": "在 Curseforge 上搜索该 Mod",
+    "searchOnMcWiki": "在 MC 百科中查找 {name}",
     "selected": "已选 Mods",
     "showFile": "打开 Mod 所在位置 {file}",
     "showInCurseforge": "在 Curseforge 上显示该 Mod",
@@ -601,9 +604,9 @@
       "includeAssets": "是否包含游戏资源 (assets) 文件",
       "includeLibraries": "是否包含库文件",
       "includeVersion": "包含游戏版本",
-      "name": "Mod包",
-      "overrides": "整合包打包覆盖 (overrides)",
       "includes": "打包文件",
+      "name": "整合包",
+      "overrides": "整合包打包覆盖 (overrides)",
       "profile": "文件名"
     },
     "name": "名称",
