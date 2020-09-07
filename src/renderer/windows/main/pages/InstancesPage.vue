@@ -5,35 +5,35 @@
     style="padding-left: 30px; padding-right: 30px; z-index: 1"
     @dragover.prevent
   >
-    <v-btn
-      absolute
-      fab
-      :color="draggingInstance.path === '' ? 'primary' : 'red'"
-      style="right: 20px; bottom: 20px; transition: all 0.2s ease;"
-      :loading="pinging"
-      @click="refresh"
-      @drop="drop"
+    <transition
+      name="scale-transition"
+      mode="out-in"
     >
-      <transition
-        name="scale-transition"
-        mode="out-in"
+      <v-btn
+        v-if="draggingInstance.path === ''"
+        :key="0"
+        absolute
+        fab
+        color="primary"
+        style="right: 20px; bottom: 20px; transition: all 0.15s ease;"
+        :loading="pinging"
+        @click="refresh"
       >
-        <v-icon
-          v-if="draggingInstance.path === ''"
-          :key="0"
-          style="transition: all 0.2s ease;"
-        >
-          refresh
-        </v-icon>
-        <v-icon
-          v-else
-          :key="1"
-          style="transition: all 0.2s ease;"
-        >
-          delete
-        </v-icon>
-      </transition>
-    </v-btn>
+        <v-icon>refresh</v-icon>
+      </v-btn>
+      <v-btn
+        v-else
+        :key="1"
+        absolute
+        fab
+        color="red"
+        style="right: 20px; bottom: 20px; transition: all 0.15s ease;"
+        :loading="pinging"
+        @drop="drop"
+      >
+        <v-icon>delete</v-icon>
+      </v-btn>
+    </transition>
     <v-layout row>
       <v-flex xs10>
         <v-text-field
@@ -245,6 +245,7 @@ export default defineComponent({
       } else {
         filterElem.value.focus();
       }
+      return false;
     }
 
     useSearchToggle(focusSearch);

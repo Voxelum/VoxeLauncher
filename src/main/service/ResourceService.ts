@@ -1,12 +1,14 @@
-import { copyPassively, readdirEnsured, sha1 } from '@main/util/fs';
+import { copyPassively, readdirEnsured, sha1, sha1ByPath, pipeline } from '@main/util/fs';
 import { commitResourceOnDisk, createResourceBuilder, decorateBuilderFromMetadata, decorateBuilderFromStat, decorateBuilderSourceUrls, decorateBuilderWithPathAndHash, discardResourceOnDisk, getBuilderFromResource, getCurseforgeUrl, getResourceFromBuilder, parseResource, Resource, ResourceBuilder, ResourceRegistryEntry, RESOURCE_ENTRY_FABRIC, RESOURCE_ENTRY_FORGE, RESOURCE_ENTRY_LITELOADER, RESOURCE_ENTRY_MODPACK, RESOURCE_ENTRY_RESOURCE_PACK, RESOURCE_ENTRY_SAVE, SourceInfomation, UNKNOWN_RESOURCE, RESOURCE_ENTRY_COMMON_MODPACK } from '@main/util/resource';
 import { CurseforgeSource, ResourceSchema } from '@universal/store/modules/resource.schema';
 import { requireString } from '@universal/util/assert';
 import { Task, task } from '@xmcl/task';
-import { readFile, stat, writeFile } from 'fs-extra';
+import { readFile, stat, writeFile, readSync, createReadStream } from 'fs-extra';
 import { extname, join, basename } from 'path';
-import fileType, { FileTypeResult, FileType } from 'file-type';
+import fileType, { FileTypeResult, FileType, stream as fileTypeByStream } from 'file-type';
 import Service from './Service';
+import { MAX_RESOURCE_SIZE } from '@main/constant';
+import { createHash } from 'crypto';
 
 export type BuiltinType = 'forge' | 'fabric' | 'resourcepack' | 'save' | 'curseforge-modpack';
 export type ImportTypeHint = string | '*' | 'mods' | 'forge' | 'fabric' | 'resourcepack' | 'liteloader' | 'curseforge-modpack' | 'save';
@@ -258,21 +260,43 @@ export default class ResourceService extends Service {
             const { path, hint } = file;
             let data: Buffer | undefined;
             let hash: string | undefined;
-            let fileStat = await stat(path);
+            let type: FileType | 'unknown' = 'unknown';
+            let resource: Resource | undefined;
+
+            const fileStat = await stat(path);
             if (fileStat.isDirectory()) {
                 return { path, resource: UNKNOWN_RESOURCE, type: 'directory', existed: false } as ParseFileResult;
             }
-            let resource: Resource | undefined;
-            let ino = fileStat.ino;
-            resource = this.getResourceByKey(ino);
+            resource = this.getResourceByKey(fileStat.ino);
+
             if (!resource) {
-                data = await readFile(path);
-                hash = sha1(data);
-                resource = this.getResourceByKey(hash);
+                if (fileStat.size > MAX_RESOURCE_SIZE) {
+                    const readStream = await fileTypeByStream(createReadStream(path));
+                    const hashStream = createHash('sha1').setEncoding('hex');
+                    await pipeline(readStream, hashStream);
+                    type = readStream.fileType?.ext ?? 'unknown';
+                    hash = hashStream.digest('hex');
+                    resource = this.getResourceByKey(hash);
+                } else {
+                    data = await readFile(path);
+                    hash = sha1(data);
+                    resource = this.getResourceByKey(hash);
+                    type = fileType(data)?.ext ?? 'unknown';
+                }
             }
             // resource existed
             if (resource) {
                 return { type: resource.type, resource, path, fileType: resource.ext, existed: true } as ParseFileResult;
+            }
+
+            if (type !== 'zip') {
+                return {
+                    path,
+                    type: 'unknown',
+                    existed: false,
+                    fileType: type ?? extname(path).replace('.', ''),
+                    resource: UNKNOWN_RESOURCE,
+                } as ParseFileResult;
             }
 
             if (!data) {
@@ -281,29 +305,18 @@ export default class ResourceService extends Service {
             if (!hash) {
                 hash = sha1(data);
             }
-            const type: FileType | 'unknown' = fileType(data)?.ext ?? 'unknown';
 
-            if (type === 'zip') {
-                let builder = createResourceBuilder({});
-                decorateBuilderWithPathAndHash(builder, path, hash);
-                decorateBuilderFromStat(builder, fileStat);
-                await this.updateBuilderMetadata(builder, data, hint);
-                resource = getResourceFromBuilder(builder);
-                return {
-                    path,
-                    type: resource.type,
-                    fileType: type,
-                    resource,
-                    existed: false,
-                } as ParseFileResult;
-            }
-            
+            let builder = createResourceBuilder({});
+            decorateBuilderWithPathAndHash(builder, path, hash);
+            decorateBuilderFromStat(builder, fileStat);
+            await this.updateBuilderMetadata(builder, data, hint);
+            // resource = getResourceFromBuilder(builder);
             return {
                 path,
-                type: 'unknown',
+                type: builder.type,
+                fileType: type,
+                resource: builder,
                 existed: false,
-                fileType: type ?? extname(path),
-                resource: UNKNOWN_RESOURCE,
             } as ParseFileResult;
         }));
     }

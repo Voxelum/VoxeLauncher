@@ -43,8 +43,8 @@ export default class VersionService extends Service {
         this.versionsWatcher.watch(this.getPath('versions'));
     }
 
-    protected async parseVersion(versionFolder: string): Promise<LocalVersion> {
-        const resolved = await Version.parse(this.state.root, versionFolder);
+    public async resolveLocalVersion(versionFolder: string, root: string = this.state.root): Promise<LocalVersion> {
+        const resolved = await Version.parse(root, versionFolder);
         const minecraft = resolved.minecraftVersion;
         const version: { [key: string]: string } = {
             id: resolved.id,
@@ -56,7 +56,6 @@ export default class VersionService extends Service {
         }
         return version as any as LocalVersion;
     }
-
 
     async resolveVersionId() {
         let cur = this.getters.instanceVersion;
@@ -72,7 +71,7 @@ export default class VersionService extends Service {
      */
     async refreshVersion(versionFolder: string) {
         try {
-            const version = await this.parseVersion(versionFolder);
+            const version = await this.resolveLocalVersion(versionFolder);
             this.commit('localVersion', version);
         } catch (e) {
             this.commit('localVersionRemove', versionFolder);
@@ -101,7 +100,7 @@ export default class VersionService extends Service {
         let versions: LocalVersion[] = [];
         for (let versionId of files) {
             try {
-                versions.push(await this.parseVersion(versionId));
+                versions.push(await this.resolveLocalVersion(versionId));
             } catch (e) {
                 this.warn(`An error occured during refresh local version ${versionId}`);
                 this.warn(e);

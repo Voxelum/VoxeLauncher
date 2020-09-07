@@ -1,7 +1,7 @@
 import { LiteLoader, Fabric, Forge } from '@xmcl/mod-parser';
 import { PackMeta } from '@xmcl/resourcepack';
 import { ResourceSchema } from '@universal/store/modules/resource.schema';
-import { Modpack } from '@main/service/CurseForgeService';
+import { CurseforgeModpackManifest } from '@main/service/CurseForgeService';
 import { LevelDataFrame } from '@xmcl/world';
 
 export function isForgeResource(resource: Resource): resource is ForgeResource {
@@ -25,7 +25,7 @@ export type ForgeResource = Resource<Forge.ModMetaData[]> & { type: 'forge' };
 export type FabricResource = Resource<Fabric.ModMetadata> & { type: 'fabric' };
 export type LiteloaderResource = Resource<LiteLoader.MetaData> & { type: 'liteloader' };
 export type ResourcePackResource = Resource<PackMeta.Pack> & { type: 'resourcepack' };
-export type CurseforgeModpackResource = Resource<Modpack> & { type: 'curseforge-modpack' };
+export type CurseforgeModpackResource = Resource<CurseforgeModpackManifest> & { type: 'curseforge-modpack' };
 export type SaveResource = Resource<LevelDataFrame> & { type: 'save' };
 export type UnknownResource = Resource<unknown> & { type: 'unknown' };
 

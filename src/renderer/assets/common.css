@@ -163,3 +163,7 @@ p {
 .v-dialog {
     overflow: hidden;
 }
+
+a {
+    -webkit-user-drag: none;
+}

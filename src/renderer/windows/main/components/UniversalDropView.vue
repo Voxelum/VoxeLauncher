@@ -32,11 +32,15 @@
                 <v-icon
                   :style="{ 'font-size' : `${50}px` }"
                   style="display: block"
-                >save_alt</v-icon>
+                >
+                  save_alt
+                </v-icon>
                 <v-card-text
                   class="headline font-weight-bold"
                   style="font-size: 100px"
-                >{{ $t('dropToImport') }}</v-card-text>
+                >
+                  {{ $t('dropToImport') }}
+                </v-card-text>
 
                 <v-card-text class="font-weight-bold">
                   <v-icon>$vuetify.icons.forge</v-icon>
@@ -71,7 +75,16 @@
                 <v-card-actions>
                   <v-btn large flat @click="cancel">{{ $t('cancel') }}</v-btn>
                   <v-spacer />
-                  <v-btn large flat color="primary" @click="start">{{ $t('profile.import.start') }}</v-btn>
+                  <v-btn
+                    large
+                    flat
+                    color="primary"
+                    :loading="loading"
+                    :disabled="disabled"
+                    @click="start"
+                  >
+                    {{ $t('profile.import.start') }}
+                  </v-btn>
                 </v-card-actions>
               </v-flex>
             </v-layout>
@@ -94,6 +107,7 @@ export interface FilePreview extends ParseFileResult {
   name: string;
   size: number;
   enabled: boolean;
+  status: 'loading' | 'idle' | 'failed' | 'saved';
 }
 
 export default defineComponent({
@@ -104,7 +118,14 @@ export default defineComponent({
     const pending = ref(true);
     const inside = ref(false);
     const previews = ref([] as FilePreview[]);
+    const status = ref([] as boolean[]);
     const { importResource, parseFileAsResource } = useResourceOperation();
+    const loading = computed(() => previews.value.some((v) => v.status === 'loading'));
+    const pendings = computed(() => previews.value.filter((v) => (v.status === 'idle' || v.status === 'failed')
+      && !v.existed
+      && (v.type !== 'directory' && v.type !== 'unknown')
+      && v.enabled));
+    const disabled = computed(() => pendings.value.length === 0);
     async function onDrop(event: DragEvent) {
       const files = [] as Array<File>;
       const dataTransfer = event.dataTransfer!;
@@ -116,7 +137,6 @@ export default defineComponent({
           }
         }
       }
-      console.log(files);
       const result = await parseFileAsResource({ files: files.map(f => ({ path: f.path })) });
       for (let i = 0; i < result.length; i++) {
         const r = result[i];
@@ -126,12 +146,16 @@ export default defineComponent({
           name: f.name,
           size: f.size,
           enabled: r.type !== 'unknown' && r.type !== 'directory',
+          status: r.existed ? 'saved' : 'idle',
         });
       }
       pending.value = false;
     }
     function remove(file: FilePreview) {
       previews.value = previews.value.filter((p) => p.path !== file.path);
+      if (previews.value.length === 0) {
+        cancel();
+      }
     }
     function cancel() {
       pending.value = true;
@@ -139,7 +163,21 @@ export default defineComponent({
       previews.value = [];
     }
     function start() {
-
+      const promises = [] as Promise<any>[];
+      for (const preview of pendings.value) {
+        preview.status = 'loading';
+        const promise = importResource({ path: preview.path }).then(() => {
+          preview.status = 'saved';
+        }, (e) => {
+          console.log(`Failed to import resource ${preview.path}`);
+          console.log(e);
+          preview.status = 'failed';
+        });
+        promises.push(promise);
+      }
+      Promise.all(promises).then(() => {
+        cancel();
+      });
     }
     document.addEventListener('dragleave', (e) => {
       if ((e as any).fromElement === null && e.dataTransfer!.effectAllowed === 'all') {
@@ -164,6 +202,8 @@ export default defineComponent({
       remove,
       cancel,
       start,
+      loading,
+      disabled,
     };
   },
 });

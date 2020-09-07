@@ -7,6 +7,9 @@ Vue.directive('long-press', (el, binding) => {
             binding.value.call(undefined, e);
         }, 1000);
     });
+    el.addEventListener('dragstart', () => {
+        clearTimeout(timeout);
+    });
     el.addEventListener('mouseleave', () => {
         clearTimeout(timeout);
     });

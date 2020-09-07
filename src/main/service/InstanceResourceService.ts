@@ -130,8 +130,12 @@ export default class InstanceResourceService extends Service {
         let promises: Promise<void>[] = [];
         this.log(`Deploy ${resources.length} to ${path}`);
         for (let resource of resources) {
-            const resourcePath = join(path, resource.domain, basename(resource.path));
-            promises.push(link(resource.path, resourcePath).catch(() => copyFile(resource.path, resourcePath)));
+            if (resource.domain === 'modpacks') {
+                this.warn(`Skip to deploy ${resource.name} as it's a modpack`);
+            } else {
+                const resourcePath = join(path, resource.domain, basename(resource.path));
+                promises.push(link(resource.path, resourcePath).catch(() => copyFile(resource.path, resourcePath)));
+            }
         }
         await Promise.all(promises);
     }

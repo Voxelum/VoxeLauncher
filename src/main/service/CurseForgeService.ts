@@ -13,7 +13,7 @@ export type ProjectType = 'mc-mods' | 'texture-packs' | 'worlds' | 'modpacks';
 /**
  * The modpack metadata structure
  */
-export interface Modpack {
+export interface CurseforgeModpackManifest {
     manifestType: string;
     manifestVersion: number;
     minecraft: {

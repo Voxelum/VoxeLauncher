@@ -14,7 +14,7 @@ export function useInstanceServerStatus(instancePath?: string) {
 
     const status = computed(() => state.instance.all[instancePath ?? state.instance.path].serverStatus);
     const acceptingVersion = useSeverStatusAcceptVersion(computed(() => status.value.version.protocol));
-    const refresh = useService('InstanceService').refreshServerStatus;
+    const { refreshServerStatus } = useService('InstanceService');
 
     return {
         acceptingVersion,
@@ -23,7 +23,7 @@ export function useInstanceServerStatus(instancePath?: string) {
         description: computed(() => status.value.description),
         favicon: computed(() => status.value.favicon || unknownServer),
         ping: computed(() => status.value.ping),
-        refresh,
+        refresh: refreshServerStatus,
     };
 }
 

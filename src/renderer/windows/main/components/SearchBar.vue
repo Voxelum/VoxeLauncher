@@ -1,7 +1,7 @@
 <template>
   <transition name="scale-transition">
     <v-text-field
-      v-show="show"
+      v-if="show"
       ref="self"
       v-model="text"
       style="position: fixed; z-index: 300;"
@@ -10,13 +10,12 @@
       append-icon="filter_list"
       @focus="focused = true"
       @blur="focused = false"
-      @keyup.esc="show = false"
     />
   </transition>
 </template>
 
 <script lang=ts>
-import { defineComponent, inject, ref, Ref, nextTick } from '@vue/composition-api';
+import { defineComponent, inject, ref, Ref, nextTick, watch } from '@vue/composition-api';
 import { useSearch, useSearchToggle } from '../hooks';
 
 export default defineComponent({
@@ -37,13 +36,13 @@ export default defineComponent({
       }
       if (show.value && !focused.value) {
         nextTick(() => {
-          self.value.focus();
+          self.value?.focus();
         });
         return true;
       } 
       show.value = !show.value;
       nextTick(() => {
-        self.value.focus();
+        self.value?.focus();
       });
       return true;
     }

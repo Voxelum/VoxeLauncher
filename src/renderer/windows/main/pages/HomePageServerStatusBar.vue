@@ -8,7 +8,7 @@
       <v-spacer />
       <text-component :source="description" />
     </div>
-    <v-btn icon :loading="loading" style="align-self: center;" @click="refreshServer">
+    <v-btn icon :loading="loading" style="align-self: center;" @click="refresh">
       <v-icon>refresh</v-icon>
     </v-btn>
   </div>  
@@ -20,12 +20,12 @@ import { useInstanceServerStatus, useBusy } from '@/hooks';
 
 export default defineComponent({
   setup() {
-    const { refresh: refreshServer, description, favicon, version, ping } = useInstanceServerStatus();
-    const loading = useBusy(refreshServer);
+    const { refresh, description, favicon, version, ping } = useInstanceServerStatus();
+    const loading = useBusy('refreshServerStatus');
     
     onMounted(() => {
       if (ping.value <= 0) {
-        refreshServer();
+        refresh();
       }
     });
     return {
@@ -33,7 +33,7 @@ export default defineComponent({
       favicon,
       description,
       loading,
-      refreshServer,
+      refresh,
     };
   },
 });

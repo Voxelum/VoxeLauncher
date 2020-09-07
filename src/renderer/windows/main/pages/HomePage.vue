@@ -48,7 +48,7 @@
     <v-tooltip top>
       <template v-slot:activator="{ on }">
         <v-btn
-          style="position: absolute; left: 20px; bottom: 10px; "
+          style="position: absolute; left: 20px; bottom: 10px; -webkit-user-drag: none"
           flat
           icon
           dark
@@ -194,21 +194,9 @@ function setupLaunch() {
   const { show: showLaunchBlockedDialog } = useDialog('launch-blocked');
   const { show: showJavaDialog } = useJavaWizardDialog();
 
-  // let launchTarget = useLocalStorageCacheBool('launchTarget', false);
-  // function selectLaunchTarget(isServer: boolean) {
-  //     launchTarget.value = isServer;
-  // }
-  // watch([errors, errorType], () => {
-  //   if (errors.value.length !== 0 || errorType.value.length !== 0) {
-  //     notify('error', `[${errorType.value}] ${errors.value}`);
-  //   }
-  // });
-
   return {
     launchStatus,
     hideLaunchStatusDialog,
-    // selectLaunchTarget,
-    // launchTarget,
     launch() {
       if (missingJava.value) {
         showJavaDialog();

@@ -275,7 +275,7 @@ export class InstanceService extends Service {
             instance.server = payload.server;
         }
 
-        instance.path = payload.path ?? this.getPathUnder(v4());
+        instance.path = payload.path || this.getPathUnder(v4());
         instance.runtime.minecraft = instance.runtime.minecraft || this.getters.minecraftRelease.id;
         instance.author = this.getters.gameProfile?.name ?? '';
         instance.creationDate = Date.now();

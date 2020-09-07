@@ -1,8 +1,24 @@
 <template>
   <v-container grid-list-md fill-height style="z-index: 10; padding">
     <v-layout row wrap>
-      <v-flex tag="h1" class="white--text" xs12>
+      <v-flex tag="h1" style="display: flex" class="white--text" xs12>
         <span class="headline">{{ name || id }}</span>
+        <v-spacer />
+        <v-menu>
+          <template v-slot:activator="{ on }">
+            <v-btn flat v-on="on"> Install To Storage </v-btn>
+          </template>
+
+          <v-list>
+            <v-list-tile
+              v-for="(item, index) in items"
+              :key="index"
+              @click=""
+            >
+              <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+            </v-list-tile>
+          </v-list>
+        </v-menu>
       </v-flex>
       <v-flex xs12>
         <v-layout fill-height row>

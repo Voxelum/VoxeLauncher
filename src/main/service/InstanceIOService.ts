@@ -3,20 +3,22 @@ import { getCurseforgeUrl } from '@main/util/resource';
 import { openCompressedStreamTask } from '@main/util/zip';
 import { createTemplate, InstanceConfig } from '@universal/store/modules/instance';
 import { InstanceSchema } from '@universal/store/modules/instance.schema';
+import { LocalVersion } from '@universal/store/modules/version';
 import { isNonnull, requireObject, requireString } from '@universal/util/assert';
 import { Exception } from '@universal/util/exception';
-import { Version } from '@xmcl/core';
+import { MinecraftFolder, Version } from '@xmcl/core';
 import { CurseforgeInstaller } from '@xmcl/installer';
 import { Task } from '@xmcl/task';
-import Unzip from '@xmcl/unzip';
-import { createReadStream, ensureDir, mkdtemp, readJson, remove, stat } from 'fs-extra';
+import { createExtractStream } from '@xmcl/unzip';
+import { createReadStream, ensureDir, mkdtemp, readdir, readJson, remove, stat } from 'fs-extra';
 import { tmpdir } from 'os';
 import { basename, join, relative, resolve } from 'path';
-import { Modpack } from './CurseForgeService';
+import { CurseforgeModpackManifest } from './CurseForgeService';
 import InstanceResourceService from './InstanceResourceService';
 import InstanceService, { EditInstanceOptions } from './InstanceService';
 import ResourceService from './ResourceService';
 import Service, { Inject, Singleton } from './Service';
+import VersionService from './VersionService';
 
 export interface InstanceFile { path: string; isDirectory: boolean; isResource: boolean }
 
@@ -99,6 +101,9 @@ export default class InstanceIOService extends Service {
 
     @Inject('InstanceResourceService')
     private instanceResourceService!: InstanceResourceService;
+
+    @Inject('VersionService')
+    private versionService!: VersionService;
 
     /**
      * Export current instance as a modpack. Can be either curseforge or normal full Minecraft
@@ -214,7 +219,7 @@ export default class InstanceIOService extends Service {
             id: `forge-${ganeVersionInstance?.forge}`,
             primary: true,
         }] : [];
-        const curseforgeConfig: Modpack = {
+        const curseforgeConfig: CurseforgeModpackManifest = {
             manifestType: 'minecraftModpack',
             manifestVersion: 1,
             minecraft: {
@@ -287,7 +292,7 @@ export default class InstanceIOService extends Service {
         if (!isDir) {
             srcDirectory = await mkdtemp(join(tmpdir(), 'launcher'));
             await createReadStream(location)
-                .pipe(Unzip.createExtractStream(srcDirectory))
+                .pipe(createExtractStream(srcDirectory))
                 .wait();
         }
 
@@ -301,10 +306,22 @@ export default class InstanceIOService extends Service {
         } else {
             instanceTemplate = createTemplate();
             instanceTemplate.creationDate = Date.now();
+
+            const dir = new MinecraftFolder(srcDirectory);
+            const versions = await readdir(dir.versions);
+            const localVersion: LocalVersion = {} as any;
+            for (const ver of versions) {
+                Object.assign(localVersion, await this.versionService.resolveLocalVersion(ver, dir.root));
+            }
+            delete localVersion.id;
+            delete localVersion.folder;
+            instanceTemplate.runtime = localVersion;
         }
 
+
         // create instance
-        let instancePath = await this.instanceService.createInstance(instanceTemplate);
+        const instancePath = await this.instanceService.createInstance(instanceTemplate);
+
 
         // start copy from src to instance
         await copyPassively(srcDirectory, instancePath, (path) => {

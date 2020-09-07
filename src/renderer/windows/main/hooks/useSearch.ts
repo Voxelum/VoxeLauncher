@@ -39,7 +39,6 @@ export function provideSearch() {
         if (e.key === 'Escape') {
             if (toggle(true)) {
                 e.preventDefault();
-                e.stopPropagation();
                 e.stopImmediatePropagation();
             }
         }

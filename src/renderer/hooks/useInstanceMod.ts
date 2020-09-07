@@ -151,11 +151,11 @@ export function useInstanceMods() {
     /**
      * Commit the change for current mods setting
      */
-    function commit(items: ModItem[]) {
+    async function commit(items: ModItem[]) {
         const enabled = items.filter(m => m.enabled);
         const disabled = items.filter(m => !m.enabled);
 
-        return Promise.all([
+        await Promise.all([
             deploy({ resources: enabled.map(m => m.resource) }),
             undeploy(disabled.map(m => m.resource as InstanceResource)),
         ]);

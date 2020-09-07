@@ -2,8 +2,10 @@ import { Fabric, Forge, LiteLoader } from '@xmcl/mod-parser';
 import { deserialize } from '@xmcl/nbt';
 import { PackMeta, readIcon, readPackMeta } from '@xmcl/resourcepack';
 import { LevelDataFrame } from '@xmcl/world';
+import type { CurseforgeModpackManifest } from '@main/service/CurseForgeService';
 import { ResourceRegistryEntry } from '.';
 import { findLevelRoot } from '../save';
+import { RuntimeVersions } from '@universal/store/modules/instance.schema';
 
 export const RESOURCE_ENTRY_FORGE: ResourceRegistryEntry<Forge.ModMetaData[]> = ({
     type: 'forge',
@@ -105,12 +107,43 @@ export const RESOURCE_ENTRY_SAVE: ResourceRegistryEntry<LevelDataFrame> = ({
     getSuggestedName: meta => meta.LevelName,
     getUri: (_, hash) => `save://${hash}`,
 });
-export const RESOURCE_ENTRY_MODPACK: ResourceRegistryEntry<any> = ({
+export const RESOURCE_ENTRY_MODPACK: ResourceRegistryEntry<CurseforgeModpackManifest> = ({
     type: 'curseforge-modpack',
     domain: 'modpacks',
     ext: '.zip',
     parseIcon: () => Promise.resolve(undefined),
     parseMetadata: fs => fs.readFile('manifest.json', 'utf-8').then(JSON.parse),
+    getSuggestedName: () => '',
+    getUri: (_, hash) => `modpack://${hash}`,
+});
+export const RESOURCE_ENTRY_COMMON_MODPACK: ResourceRegistryEntry<{ root: string; runtime: RuntimeVersions }> = ({
+    type: 'modpack',
+    domain: 'modpacks',
+    ext: '.zip',
+    parseIcon: () => Promise.resolve(undefined),
+    parseMetadata: async (fs) => {
+        if (await fs.isDirectory('./versions')
+            && await fs.isDirectory('./mods')) {
+            
+            return { root: '', runtime:  };
+        }
+        if (await fs.isDirectory('.minecraft')) {
+            return { root: '.minecraft' };
+        }
+        const files = await fs.listFiles('');
+        for (const file of files) {
+            if (await fs.isDirectory(file)) {
+                if (await fs.isDirectory(fs.join(file, 'versions'))
+                    && await fs.isDirectory(fs.join(file, 'mods'))) {
+                    return { root: file };
+                }
+                if (await fs.isDirectory(fs.join(file, '.minecraft'))) {
+                    return { root: fs.join(file, '.minecraft') };
+                }
+            }
+        }
+        throw new Error();
+    },
     getSuggestedName: () => '',
     getUri: (_, hash) => `modpack://${hash}`,
 });

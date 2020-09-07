@@ -13,7 +13,7 @@ Vue.directive('draggable-card', (el) => {
 });
 
 Vue.directive('selectable-card', (el) => {
-    el.addEventListener('mousedown', () => {
+    el.addEventListener('mousedown', (e) => {
         el.classList.add('selected');
     });
     const removeClass = () => {

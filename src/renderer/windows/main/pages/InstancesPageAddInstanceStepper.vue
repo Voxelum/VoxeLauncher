@@ -354,7 +354,7 @@ function setupTemplates() {
   const { $t } = useI18n();
   const { modpacks, instances } = useInstanceTemplates();
   const { toggles } = useSearchToggles();
-  useSearchToggle(toggles[toggles.length - 1]!);
+  useSearchToggle(toggles.value[toggles.value.length - 1]!);
   const { text } = useSearch();
   const getModpackVersion = (modpack: Modpack) => {
     let version = `Minecraft: ${modpack.minecraft.version}`;
@@ -503,7 +503,7 @@ export default defineComponent({
         });
         init();
         router.replace('/');
-        data.template = -1;
+        data.template = undefined;
       } finally {
         data.creating = false;
       }

@@ -1,15 +1,23 @@
 <template>
   <v-card>
     <v-card-title primary-title>
-      <div style="margin-bottom: 5px">
+      <div style="margin-bottom: 20px">
         <h3 class="headline mb-0">{{ $t('mod.deletion') }}</h3>
       </div>
       <div
         style="overflow: hidden; word-break: break-all;"
       >
-        {{ $t('mod.deletionHint', { mod: name }) }}
+        {{ $tc('mod.deletionHint', mods.length) }}
       </div>
-      <div style="overflow: hidden; word-break: break-all; color: #f44336; font-style: italic; font-weight: bold; padding: 5px 5px 0 0">{{ name }}</div>
+      <ol style="margin-top: 5px">
+        <li v-for="mod in mods" 
+            :key="mod">
+          <span style="overflow: hidden; word-break: break-all; font-weight: bold; "> {{ mod }} </span>
+        </li>
+        <li v-if="rest > 0" style="overflow: hidden; word-break: break-all; font-style: italic; ">
+          {{ $t('mod.deletionRestHint', { rest }) }}
+        </li>
+      </ol>
     </v-card-title>
 
     <v-divider />
@@ -34,14 +42,21 @@
 </template>
 
 <script lang=ts>
-import { defineComponent } from '@vue/composition-api';
+import { computed, defineComponent } from '@vue/composition-api';
 import { required } from '@/util/props';
+import { ModItem } from '@/hooks';
 
 export default defineComponent({
   props: {
     confirm: required<() => void>(Function),
     cancel: required<() => void>(Function),
-    name: required<string>(String),
+    items: required<ModItem[]>(Array),
+  },
+  setup(props) {
+    return { 
+      mods: computed(() => props.items.map((i) => `${i.name} v${i.version}`).filter((_, i) => i <= 4)),
+      rest: computed(() => (props.items.length > 4 ? props.items.length - 4 : 0)),
+    };
   },
 });
 </script>

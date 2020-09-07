@@ -1,14 +1,15 @@
 <template>
-  <v-card color="#grey darken-3" hover dark draggable 
-          :style="{ 'transform': dragged ? 'scale(0.8)' : 'scale(1)' }"
-          @click="$emit('click', $event)" 
-          @mousedown.left="dragged = true"
-          @dragstart="$emit('dragstart',$event);" 
-          @dragend="$emit('dragend', $event); dragged = false"
+  <v-card 
+    v-draggable-card
+    color="grey darken-3 draggable-card"
+    hover
+    dark
+    draggable
+    @click="$emit('click', $event)" 
+    @dragstart="onDragStart" 
   >
     <v-img
-      :class="{ 'grey': true, 'darken-2': true }"
-      class="white--text favicon"
+      class="white--text favicon grey darken-2"
       height="100px"
       :src="favicon || ''"
     >
@@ -75,24 +76,21 @@
 <script lang=ts>
 import { defineComponent, reactive, toRefs, computed } from '@vue/composition-api';
 import { useInstanceServerStatus } from '@/hooks';
+import { Instance } from '@universal/store/modules/instance';
+import { required } from '@/util/props';
 
 export default defineComponent({
   props: {
-    instance: {
-      type: Object,
-      required: true,
-    },
+    instance: required<Instance>(Object),
   },
-  setup(props) {
-    const data = reactive({
-      dragged: false,
-    });
-    const refs = toRefs(data);
-
+  setup(props, context) {
+    function onDragStart(event: DragEvent) {
+      event.dataTransfer!.effectAllowed = 'move';
+    }
     return {
       ...useInstanceServerStatus(props.instance.path),
-      dragged: refs.dragged,
       description: computed(() => props.instance.description),
+      onDragStart,
     };
   },
 });

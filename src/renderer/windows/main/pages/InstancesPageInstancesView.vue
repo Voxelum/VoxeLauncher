@@ -68,7 +68,7 @@
 </template>
 
 <script lang=ts>
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent, Ref } from '@vue/composition-api';
 import { Instance } from '@universal/store/modules/instance';
 import { required } from '@/util/props';
 import PreviewCard from './InstancesPagePreviewCard.vue';
@@ -82,7 +82,7 @@ export default defineComponent({
     const now = Date.now();
     const oneDay = 1000 * 60 * 60 * 24;
     const threeDays = oneDay * 3;
-    const instancesByTime = computed(() => {
+    const instancesByTime: Ref<Instance[][]> = computed(() => {
       const todayR = [];
       const threeR = [];
       const other = [];

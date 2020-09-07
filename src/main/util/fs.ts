@@ -1,8 +1,11 @@
-import { checksum } from '@xmcl/installer/util';
-import { access, constants, copyFile, ensureDir, FSWatcher, readdir, stat, watch, remove, unlink } from 'fs-extra';
+import { checksum, pipeline } from '@xmcl/installer/util';
+import { access, constants, copyFile, ensureDir, FSWatcher, readdir, stat, watch, remove, unlink, ReadStream } from 'fs-extra';
 import { resolve, join } from 'path';
 import filenamify from 'filenamify';
 import { createHash } from 'crypto';
+import { finished } from 'stream';
+
+export { pipeline };
 
 export function missing(file: string) {
     return access(file, constants.F_OK).then(() => false, () => true);
@@ -97,4 +100,8 @@ export function getSuggestedFilename(name: string) {
 
 export function sha1(data: Buffer) {
     return createHash('sha1').update(data).digest('hex');
+}
+
+export function sha1ByPath(path: string) {
+    return checksum(path, 'sha1');
 }

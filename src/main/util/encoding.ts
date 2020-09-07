@@ -40,13 +40,6 @@ function toNodeEncoding(enc: string | null): string {
     return enc;
 }
 
-// we explicitly ignore a specific set of encodings from auto guessing
-// - ASCII: we never want this encoding (most UTF-8 files would happily detect as
-//          ASCII files and then you could not type non-ASCII characters anymore)
-// - UTF-16: we have our own detection logic for UTF-16
-// - UTF-32: we do not support this encoding in VSCode
-const IGNORE_ENCODINGS = ['ascii', 'utf-16', 'utf-32'];
-
 /**
  * Guesses the encoding from buffer.
  */
@@ -56,11 +49,6 @@ export async function guessEncodingByBuffer(buffer: Buffer): Promise<string | nu
     const guessed = jschardet.detect(buffer.slice(0, AUTO_ENCODING_GUESS_MAX_BYTES)); // ensure to limit buffer for guessing due to https://github.com/aadsm/jschardet/issues/53
     if (!guessed || !guessed.encoding) {
         return null;
-    }
-
-    const enc = guessed.encoding.toLowerCase();
-    if (0 <= IGNORE_ENCODINGS.indexOf(enc)) {
-        return null; // see comment above why we ignore some encodings
     }
 
     return toIconvLiteEncoding(guessed.encoding);

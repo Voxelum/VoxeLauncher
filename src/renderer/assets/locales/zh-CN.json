@@ -195,6 +195,7 @@
   },
   "downloadUpdate": "下载更新",
   "dropToImport": "将文件拖到这并导入为",
+  "unknownResource": "无法解析",
   "edit": "编辑",
   "fabric": {
     "disable": "不启用 Fabric",
