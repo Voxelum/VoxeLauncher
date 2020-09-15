@@ -1,3 +1,4 @@
+import LauncherApp from '@main/app/LauncherApp';
 import { Client } from '@main/engineBridge';
 import BaseService from '@main/service/BaseService';
 import CurseForgeService from '@main/service/CurseForgeService';
@@ -23,11 +24,10 @@ import { aquire, isBusy, release } from '@universal/util/semaphore';
 import { StaticStore } from '@universal/util/staticStore';
 import { Task, TaskHandle } from '@xmcl/task';
 import { EventEmitter } from 'events';
-import { join } from 'path';
 import { Manager } from '.';
 
 // eslint-disable-next-line @typescript-eslint/type-annotation-spacing
-type Constructor<T> = new () => T;
+type Constructor<T> = new (app: LauncherApp) => T;
 
 interface ServiceCallSession {
     id: number;
@@ -57,59 +57,42 @@ export default class ServiceManager extends Manager {
 
     protected registerService(s: Constructor<Service>) { this.registeredServices.push(s); }
 
-    aquire(res: string | string[]) {
-        aquire(this.semaphore, res);
-        this.app.broadcast('aquire', res);
+    /**
+     * Aquire and boradcast the key is in used.
+     * @param key The key or keys to aquire
+     */
+    aquire(key: string | string[]) {
+        aquire(this.semaphore, key);
+        this.app.broadcast('aquire', key);
     }
 
-    release(res: string | string[]) {
-        release(this.semaphore, res);
-        this.app.broadcast('release', res);
+    /**
+     * Release and boradcast the key is not used.
+     * @param key The key or keys to release
+     */
+    release(key: string | string[]) {
+        release(this.semaphore, key);
+        this.app.broadcast('release', key);
     }
 
-    isBusy(res: string) {
-        return isBusy(this.semaphore, res);
+    /**
+     * Determine if a key is in used.
+     * @param key key value representing some operation
+     */
+    isBusy(key: string) {
+        return isBusy(this.semaphore, key);
     }
 
     /**
      * Setup all services.
      */
     setupServices() {
-        const store = this.app.storeManager.store;
-
         this.log(`Setup service ${this.app.gameDataPath}`);
-
-        Object.defineProperties(Service.prototype, {
-            commit: { value: store.commit },
-            state: { value: store.state },
-            getters: { value: store.getters },
-            minecraftPath: { value: this.app.minecraftDataPath },
-            getPath: { value: (...args: string[]) => join(this.app.gameDataPath, ...args) },
-            getMinecraftPath: { value: (...args: string[]) => join(this.app.minecraftDataPath, ...args) },
-            getAppDataPath: { value: (...args: string[]) => join(this.app.appDataPath, ...args) },
-            app: { value: this.app },
-            networkManager: { value: this.app.networkManager },
-            logManager: { value: this.app.logManager },
-            taskManager: { value: this.app.taskManager },
-            storeManager: { value: this.app.storeManager },
-            serviceManager: { value: this.app.serviceManager },
-        });
-
-        const logger = this.app.logManager;
-        // inject the logger to service prototype
-        for (let service of this.registeredServices) {
-            const name = service.name;
-            Object.defineProperties(service.prototype, {
-                log: { value: (m: any, ...a: any[]) => logger.log(`[${name}] ${m}`, ...a) },
-                warn: { value: (m: any, ...a: any[]) => logger.warn(`[${name}] ${m}`, ...a) },
-                error: { value: (m: any, ...a: any[]) => logger.error(`[${name}] ${m}`, ...a) },
-            });
-        }
 
         // create service instance
         let services: Service[] = this.services;
         for (let ServiceConstructor of this.registeredServices) {
-            services.push(new ServiceConstructor());
+            services.push(new ServiceConstructor(this.app));
         }
 
         // register the service to map

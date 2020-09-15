@@ -10,13 +10,6 @@ import { readInfo, ServerInfo } from '@xmcl/server-info';
 import { ensureDir, readdir, readFile, remove } from 'fs-extra';
 import { join, resolve } from 'path';
 import { v4 } from 'uuid';
-import CurseForgeService from './CurseForgeService';
-import InstanceGameSettingService from './InstanceGameSettingService';
-import InstanceIOService from './InstanceIOService';
-import InstanceResourceService from './InstanceResourceService';
-import InstanceSavesService from './InstanceSavesService';
-import JavaService from './JavaService';
-import ResourceService from './ResourceService';
 import ServerStatusService from './ServerStatusService';
 import Service, { Inject, MutationTrigger, Singleton } from './Service';
 
@@ -54,29 +47,8 @@ export interface EditInstanceOptions extends Partial<Omit<InstanceSchema, 'deplo
  * Provide instance spliting service. It can split the game into multiple environment and dynamiclly deploy the resource to run.
  */
 export class InstanceService extends Service {
-    @Inject('JavaService')
-    protected readonly javaService!: JavaService;
-
     @Inject('ServerStatusService')
     protected readonly statusService!: ServerStatusService;
-
-    @Inject('ResourceService')
-    protected readonly resourceService!: ResourceService;
-
-    @Inject('CurseForgeService')
-    protected readonly curseforgeSerivce!: CurseForgeService;
-
-    @Inject('InstanceSavesService')
-    protected readonly saveService!: InstanceSavesService;
-
-    @Inject('InstanceResourceService')
-    protected readonly instResourceService!: InstanceResourceService;
-
-    @Inject('InstanceGameSettingService')
-    protected readonly gameService!: InstanceGameSettingService;
-
-    @Inject('InstanceIOService')
-    protected readonly ioService!: InstanceIOService;
 
     protected getPathUnder(...ps: string[]) {
         return this.getPath(INSTANCES_FOLDER, ...ps);

@@ -124,7 +124,7 @@ export const RESOURCE_ENTRY_COMMON_MODPACK: ResourceRegistryEntry<{ root: string
     parseMetadata: async (fs) => {
         if (await fs.isDirectory('./versions')
             && await fs.isDirectory('./mods')) {
-            
+
             return { root: '', runtime:  };
         }
         if (await fs.isDirectory('.minecraft')) {
@@ -147,3 +147,13 @@ export const RESOURCE_ENTRY_COMMON_MODPACK: ResourceRegistryEntry<{ root: string
     getSuggestedName: () => '',
     getUri: (_, hash) => `modpack://${hash}`,
 });
+
+export const ENTRIES = [
+    RESOURCE_ENTRY_COMMON_MODPACK,
+    RESOURCE_ENTRY_FORGE,
+    RESOURCE_ENTRY_FABRIC,
+    RESOURCE_ENTRY_LITELOADER,
+    RESOURCE_ENTRY_RESOURCE_PACK,
+    RESOURCE_ENTRY_SAVE,
+    RESOURCE_ENTRY_MODPACK,
+];

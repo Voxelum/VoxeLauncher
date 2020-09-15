@@ -19,8 +19,8 @@ export default class JavaService extends Service {
     }
 
     async load() {
-        let loaded: JavaSchema = await this.getPersistence({ path: this.getPath('java.json'), schema: JavaSchema });
-        let javas = loaded.all.filter(l => typeof l.path === 'string').map(a => ({ ...a, valid: true }));
+        const loaded: JavaSchema = await this.getPersistence({ path: this.getPath('java.json'), schema: JavaSchema });
+        const javas = loaded.all.filter(l => typeof l.path === 'string').map(a => ({ ...a, valid: true }));
         this.commit('javaUpdate', javas);
         this.log(`Loaded ${javas.length} java from cache.`);
         if (this.state.java.all.length === 0) {

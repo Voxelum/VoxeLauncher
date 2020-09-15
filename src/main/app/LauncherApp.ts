@@ -80,6 +80,8 @@ export interface LauncherApp {
 }
 
 export abstract class LauncherApp extends EventEmitter {
+    static app: LauncherApp;
+
     /**
      * Launcher %APPDATA%/xmcl path
      */
@@ -141,6 +143,7 @@ export abstract class LauncherApp extends EventEmitter {
         this.minecraftDataPath = join(appData, this.platform.name === 'osx' ? 'minecraft' : '.minecraft');
         this.temporaryPath = '';
         this.controller = new LauncherAppController(this, this.getContext());
+        LauncherApp.app = this;
     }
 
     abstract getLocale(): string;

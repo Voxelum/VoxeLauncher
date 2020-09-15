@@ -100,3 +100,29 @@ export function getCurseforgeSourceInfo(project: number, file: number): SourceIn
         },
     };
 }
+
+export class ResourceCache {
+    private cache: Record<string, Resource> = {};
+
+    put(resource: Resource) {
+        this.cache[resource.hash] = resource;
+        for (let url of resource.source.uri) {
+            this.cache[url] = resource;
+        }
+        this.cache[resource.ino] = resource;
+        this.cache[resource.path] = resource;
+    }
+
+    discard(resource: Resource) {
+        delete this.cache[resource.hash];
+        for (let url of resource.source.uri) {
+            delete this.cache[url];
+        }
+        delete this.cache[resource.ino];
+        delete this.cache[resource.path];
+    }
+
+    get(key: string | number) {
+        return this.cache[key];
+    }
+}

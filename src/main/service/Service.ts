@@ -12,6 +12,7 @@ import { Task, TaskHandle } from '@xmcl/task';
 import Ajv from 'ajv';
 import { ensureFile, readFile, writeFile } from 'fs-extra';
 import { createContext, runInContext } from 'vm';
+import { join } from 'path';
 
 export const INJECTIONS_SYMBOL = Symbol('__injections__');
 export const MUTATION_LISTENERS_SYMBOL = Symbol('__listeners__');
@@ -50,29 +51,48 @@ export function MutationTrigger(...keys: MutationKeys[]) {
     };
 }
 
+export type KeySerializer = (this: Service, ...params: any[]) => string;
+
+export enum Policy {
+    Skip = 'skip',
+    Wait = 'wait'
+}
+
+const runningSingleton: Record<string, Promise<any>> = {};
+
 /**
- * A service method decorator to make sure this service call should run in singleton -- no second call at the time. 
+ * A service method decorator to make sure this service call should run in singleton -- no second call at the time.
+ * The later call will wait the first call end and return the first call result.
  */
-export function Singleton(...keys: string[]) {
+export function Singleton(...keys: (string | KeySerializer)[]) {
     return function (target: Service, propertyKey: string, descriptor: PropertyDescriptor) {
         const method = descriptor.value;
-        const sem: any = [propertyKey, ...keys];
-        const func = function (this: Service, ...arges: any[]) {
-            if (this.isBusy(sem)) return undefined;
-            this.aquire(sem);
+        const func = function (this: Service, ...args: any[]) {
+            const semiphores: string[] = [propertyKey, ...keys.map((k => (typeof k === 'string' ? k : k.bind(this)(...args))))];
+            if (semiphores.some((key) => this.isBusy(key))) {
+                return runningSingleton[semiphores[0]];
+            }
+            this.aquire(semiphores);
             let isPromise = false;
             try {
-                const result = method.apply(this, arges);
+                const result = method.apply(this, args);
                 if (result instanceof Promise) {
                     isPromise = true;
-                    return result.finally(() => {
-                        this.release(sem);
+                    const promise = result.finally(() => {
+                        for (const s of semiphores) {
+                            delete runningSingleton[s];
+                        }
+                        this.release(semiphores);
                     });
+                    for (const s of semiphores) {
+                        runningSingleton[s] = promise;
+                    }
+                    return promise;
                 }
                 return result;
             } finally {
                 if (!isPromise) {
-                    this.release(sem);
+                    this.release(semiphores);
                 }
             }
         };
@@ -80,43 +100,6 @@ export function Singleton(...keys: string[]) {
     };
 }
 
-
-/**
- * A service method decorator to make sure this service call should run in singleton -- no second call at the time. 
- */
-export function DynamicSingleton(keySerializer: (this: Service, ...params: any[]) => string) {
-    return function (target: Service, propertyKey: string, descriptor: PropertyDescriptor) {
-        const method = descriptor.value;
-        const func = function (this: Service, ...arges: any[]) {
-            let sem = keySerializer.bind(this)(...arges);
-            if (this.isBusy(sem)) return undefined;
-            this.aquire(sem);
-            let isPromise = false;
-            try {
-                const result = method.apply(this, ...arges);
-                if (result instanceof Promise) {
-                    isPromise = true;
-                    return result.finally(() => {
-                        this.release(sem);
-                    });
-                }
-                return result;
-            } finally {
-                if (!isPromise) {
-                    this.release(sem);
-                }
-            }
-        };
-        descriptor.value = func;
-    };
-}
-
-export function Debounce() {
-}
-
-/**
- * A service method decorator to make sure this service call should run in singleton -- no second call at the time. 
- */
 export function Pure() {
     return function (target: Service, propertyKey: string, descriptor: PropertyDescriptor) {
         let func = Reflect.get(target, propertyKey);
@@ -130,27 +113,38 @@ export class ServiceException extends Error {
     }
 }
 
-// /**
-//  * A service method decorator to make sure this service call should run in singleton -- no second call at the time. 
-//  */
-// export function Queue(...keys: string[]) {
-//     return function (target: Service, propertyKey: string, descriptor: PropertyDescriptor) {
-//         const method = descriptor.value;
-//         const sem: any = [propertyKey, ...keys];
-//         const func = function (this: Service) {
-//             if (this.getters.busy(sem)) {
-//                 new Promise((resolve) => {
-//                     this.StoreAndServiceManager.store ?.watch((state) => {
-//                         sem.map((s: string) => state.semaphore[s])
-//                             .every((i: number) => i === 0);
-//                     }, () => { resolve() });
-//                 });
-//             }
-//         }
-//         descriptor.value = func;
-//     };
-// }
 
+class WaitingQueue {
+    private queue: Array<[Promise<void>, () => void]> = [];
+
+    async getAndWait(): Promise<void> {
+        let last: Promise<void> | undefined = this.queue[this.queue.length - 1]?.[0];
+        let r: () => void;
+        let p = new Promise<void>((resolve) => {
+            r = resolve;
+        });
+        // reserve your place in line
+        this.queue.push([p, r!]);
+        // wait last guy to finish
+        await last;
+    }
+
+    release(): void {
+        this.queue.shift()?.[1]();
+    }
+
+    isWaiting() {
+        return this.queue.length > 0;
+    }
+
+    async wait() {
+        await this.queue[this.queue.length - 1]?.[0];
+    }
+}
+
+class WaitingQueues {
+    queues: Record<string, WaitingQueue> = {};
+}
 
 /**
  * The base class of a service.
@@ -158,17 +152,21 @@ export class ServiceException extends Error {
  * The service is a stateful object has life cycle. It will be created when the launcher program start, and destroied 
  */
 export default class Service implements Managers {
-    readonly app!: LauncherApp;
+    readonly name: string;
 
-    readonly networkManager!: NetworkManager;
+    constructor(readonly app: LauncherApp) {
+        this.name = Object.getPrototypeOf(this).constructor.name;
+    }
 
-    readonly serviceManager!: ServiceManager;
+    get networkManager() { return this.app.networkManager; }
 
-    readonly taskManager!: TaskManager;
+    get serviceManager() { return this.app.serviceManager; }
 
-    readonly logManager!: LogManager;
+    get taskManager() { return this.app.taskManager; }
 
-    readonly storeManager!: StoreManager;
+    get logManager() { return this.app.logManager; }
+
+    get storeManager() { return this.app.storeManager; }
 
     /**
      * Submit a task into the task manager. 
@@ -184,37 +182,42 @@ export default class Service implements Managers {
     /**
      * The managed state
      */
-    readonly state!: RootState;
+    get state(): RootState { return this.storeManager.store.state; }
 
     /**
      * The managed getter
      */
-    readonly getters!: RootGetters;
+    get getters(): RootGetters { return this.storeManager.store.getters as any; }
 
     /**
      * The commit method
      */
-    readonly commit!: RootCommit;
+    get commit(): RootCommit { return this.storeManager.store.commit; }
 
     /**
      * Return the path under the config root
      */
-    protected getAppDataPath!: (...args: string[]) => string;
+    protected getAppDataPath: (...args: string[]) => string = (args) => join(this.app.appDataPath, ...args);
+
+    /**
+     * Return the path under the temp root
+     */
+    protected getTempPath: (...args: string[]) => string = (args) => join(this.app.temporaryPath, ...args);
 
     /**
      * Return the path under game libraries/assets root
      */
-    protected getPath!: (...args: string[]) => string;
+    protected getPath: (...args: string[]) => string = (args) => join(this.app.gameDataPath, ...args);
 
     /**
      * Return the path under .minecraft folder
      */
-    protected getMinecraftPath!: (...args: string[]) => string;
+    protected getMinecraftPath: (...args: string[]) => string = (args) => join(this.app.minecraftDataPath, ...args);
 
     /**
      * The path of .minecraft
      */
-    protected minecraftPath!: string;
+    protected get minecraftPath() { return this.app.minecraftDataPath; }
 
     async save(payload: { mutation: MutationKeys; payload: any }): Promise<void> { }
 
@@ -224,27 +227,26 @@ export default class Service implements Managers {
 
     async dispose(): Promise<void> { }
 
-    protected readonly log!: typeof console.log;
+    protected log(m: any, ...a: any[]) {
+        this.logManager.log(`[${this.name}] ${m}`, ...a);
+    }
 
-    protected readonly error!: typeof console.error;
+    protected error(m: any, ...a: any[]) {
+        this.logManager.error(`[${this.name}] ${m}`, ...a);
+    }
 
-    protected readonly warn!: typeof console.warn;
+    protected warn(m: any, ...a: any[]) {
+        this.logManager.warn(`[${this.name}] ${m}`, ...a);
+    }
 
     protected isBusy(key: string) {
         return this.serviceManager.isBusy(key);
     }
 
-    /**
-     * Aqure the resource
-     * @param key the resources key to aquire
-     */
     protected aquire(key: string | string[]) {
         this.serviceManager.aquire(key);
     }
 
-    /**
-     * Release a or many resource
-     */
     protected release(key: string | string[]) {
         this.serviceManager.release(key);
     }

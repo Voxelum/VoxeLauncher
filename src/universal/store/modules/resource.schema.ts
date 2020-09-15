@@ -46,29 +46,17 @@ export interface Source {
 
 export interface ResourceSchema {
     /**
+     * The resource file path relative to the resource domain
+     */
+    path: string;
+    /**
      * The name of the resource
      */
     name: string;
     /**
-     * The resource file path
-     */
-    path: string;
-    /**
-     * The ino of the file on disk
-     */
-    ino: number;
-    /**
      * The sha1 of the resource
      */
     hash: string;
-    /**
-     * The size of the resource
-     */
-    size: number;
-    /**
-     * The suggested ext of the resource
-     */
-    ext: string;
     /**
      * The resource type. Can be `forge`, `liteloader`, `resourcepack`, and etc.
      */

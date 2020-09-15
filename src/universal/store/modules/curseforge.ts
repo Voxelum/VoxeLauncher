@@ -19,7 +19,6 @@ interface Getters {
 interface Mutations {
     curseforgeDownloadFileStart: { fileId: number; taskId: string };
     curseforgeDownloadFileEnd: number;
-
     curseforgeCategories: { categories: Category[]; timestamp: string };
 }
 

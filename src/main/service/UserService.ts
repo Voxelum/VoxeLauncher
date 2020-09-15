@@ -8,7 +8,7 @@ import { AUTH_API_MOJANG, checkLocation, GameProfile, getChallenges, getTextures
 import { readFile, readJSON } from 'fs-extra';
 import { parse } from 'url';
 import { v4 } from 'uuid';
-import Service, { DynamicSingleton, Singleton } from './Service';
+import Service, { Singleton } from './Service';
 
 export interface LauncherProfile {
     /**
@@ -301,7 +301,7 @@ export default class UserService extends Service {
     /**
      * Refresh current skin status
      */
-    @DynamicSingleton(function (this: Service, o: RefreshSkinOptions = {}) {
+    @Singleton(function (this: Service, o: RefreshSkinOptions = {}) {
         let {
             gameProfileId = this.state.user.selectedUser.profile,
             userId = this.state.user.selectedUser.id,

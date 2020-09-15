@@ -20,7 +20,21 @@ export function isModResource(resource: Resource): resource is ForgeResource | F
     return resource.type === 'forge' || resource.type === 'fabric' || resource.type === 'liteloader';
 }
 
-export type Resource<T = unknown> = Omit<ResourceSchema, 'metadata'> & { metadata: T };
+export interface Resource<T = unknown> extends Omit<ResourceSchema, 'metadata'> {
+    metadata: T;
+    /**
+     * The ino of the file on disk
+     */
+    ino: number;
+    /**
+     * The size of the resource
+     */
+    size: number;
+    /**
+     * The suggested ext of the resource
+     */
+    ext: string;
+}
 export type ForgeResource = Resource<Forge.ModMetaData[]> & { type: 'forge' };
 export type FabricResource = Resource<Fabric.ModMetadata> & { type: 'fabric' };
 export type LiteloaderResource = Resource<LiteLoader.MetaData> & { type: 'liteloader' };
