@@ -9,7 +9,7 @@ const config = {
         oneClick: false,
         allowToChangeInstallationDirectory: true,
         perMachine: true,
-        differentialPackage: true
+        differentialPackage: true,
     },
     nsisWeb: {
         appPackageUrl: "https://xmcl-release.azureedge.net/releases",
