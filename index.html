@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="A Empower Your Minecraft Experience, 极简、强大的 Minecraft 启动器">
+    <meta name="keywords"
+        content="Minecraft, Launcher, Minecraft Launcher, 启动器, Minecraft 启动器, Electron, NodeJS, Electron Minecraft Launcher">
+    <meta name="robots" content="all">
+    <title>XMCL - Empower Your Minecraft Experience</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pagepiling.js@1.5.6/jquery.pagepiling.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pagepiling.js@1.5.6/jquery.pagepiling.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/site.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/menu.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/card.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/container.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/icon.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/dropdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/label.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/button.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/tab.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/transition.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/grid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/popup.min.css">
+</head>
+
+<body>
+    <div class="following bar">
+        <div class="ui container">
+            <div class="ui large inverted secondary network menu">
+                <a class="item" href="https://github.com/voxelum/x-minecraft-launcher">
+                    <i class="github square icon"></i>
+                    <p data-i18n="repository"></p>
+                </a>
+                <a class="item" href="https://github.com/ci010">
+                    <i class="github square icon"></i>
+                    <p>cijhn@hotmail.com</p>
+                </a>
+                <div class="right menu">
+                    <div class="item">
+                    </div>
+                    <div class="ui language floating dropdown link item" id="languages">
+                        <i class="world icon"></i>
+                        <div lang class="text" style="color: white">English</div>
+                        <div class="menu">
+                            <div class="scrolling menu">
+                                <div class="item" value="zh">
+                                    简体中文
+                                </div>
+                                <div class="item" value="en">
+                                    English
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu">
+                    <div class="item">
+                    </div>
+                    <div class="ui language floating dropdown link item" id="source">
+                        <i class="download icon"></i>
+                        <div class="text" style="color: white" data-i18n="auto-source">
+                            Auto
+                        </div>
+                        <div class="menu">
+                            <div class="scrolling menu">
+                                <div class="item" data-i18n="auto-source" value="auto">
+                                    Auto
+                                </div>
+                                <div class="item" data-i18n="azure-source" value="azure">
+                                    Azure
+                                </div>
+                                <div class="item" data-i18n="github-source" value="github">
+                                    Github
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="fullpage">
+        <div class="section face">
+            <div main class="ui container">
+                <a id="version" class="ui black version label" target="_blank"
+                    href="https://github.com/voxelum/x-minecraft-launcher/releases">
+                </a>
+                <h1 class="ui inverted header" style="line-height: 1.4;font-size: 3em;">
+                    <div style="font-size: 1.75em;font-weight: bold;">
+                        X Minecraft Launcher
+                    </div>
+                    <div style="font-size: 0.75em;">
+                        KeyStone UI
+                    </div>
+                    <div style="font-size: 0.75em;" data-i18n="launcher.description">
+                    </div>
+                </h1>
+            </div>
+        </div>
+        <div class="section intro">
+            <div class="ui container">
+                <div win>
+                    <h1 class="ui inverted header" style="line-height: 1.4;font-size: 3em;">
+                        <div style="font-size: 0.45em;" data-i18n="downloadFor.windows">
+                        </div>
+                    </h1>
+                    <div class="ui hidden divider" style="padding: 0 0;"></div>
+                    <a win-web class="ui huge inverted download labeled icon teal button">
+                        <i class="plane icon"></i>
+                        <span data-i18n="download-web"></span>
+                    </a>
+                    <a win-setup class="ui huge inverted download labeled icon positive button">
+                        <i class="rocket icon"></i>
+                        <span data-i18n="download"></span>
+                    </a>
+                    <a win-zip class="ui huge inverted download labeled icon brown button">
+                        <i class="box icon"></i>
+                        <span data-i18n="download-zip"></span>
+                    </a>
+                </div>
+
+                <div mac>
+                    <h1 class="ui inverted header" style="line-height: 1.4;font-size: 3em;">
+                        <div id="downloadFor" style="font-size: 0.45em;" data-i18n="downloadFor.mac">
+                        </div>
+                    </h1>
+                    <div class="ui hidden divider" style="padding: 0 0;"></div>
+                    <a dmg class="ui huge inverted download labeled icon positive button">
+                        <i class="hdd icon"></i>
+                        <span data-i18n="download-dmg"></span>
+                    </a>
+                    <a mac-zip class="ui huge inverted download labeled icon brown button">
+                        <i class="box icon"></i>
+                        <span data-i18n="download-zip"></span>
+                    </a>
+                </div>
+
+                <div linux>
+                    <h1 class="ui inverted header" style="line-height: 1.4;font-size: 3em;">
+                        <div id="downloadFor" style="font-size: 0.45em;" data-i18n="downloadFor.linux">
+                        </div>
+                    </h1>
+                    <div class="ui hidden divider" style="padding: 0 0;"></div>
+                    <a deb class="ui huge inverted download labeled icon red button">
+                        <i class="circle outline icon"></i>
+                        <span data-i18n="download-deb"></span>
+                    </a>
+                    <a snap class="ui huge inverted download labeled icon teal button">
+                        <i class="dolly icon"></i>
+                        <span data-i18n="download-snap"></span>
+                    </a>
+                    <a appimage class="ui huge inverted download labeled icon positive button">
+                        <i class="dolly flatbed icon"></i>
+                        <span data-i18n="download-appimage"></span>
+                    </a>
+                    <a rpm class="ui huge inverted download labeled icon button">
+                        <i class="hdd icon"></i>
+                        <span data-i18n="download-rpm"></span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/i18next@19.6.2/i18next.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery-i18next@1.2.1/jquery-i18next.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/dropdown.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/tab.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/transition.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.6/dist/components/popup.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/pagepiling.js@1.5.6/jquery.pagepiling.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@3.14.0/dist/js-yaml.min.js"></script>
+    <!-- <script src="https://xmcl.blob.core.windows.net/releases/latest-version.js"></script> -->
+    <script src="https://xmcl-release.azureedge.net/releases/latest-version.js"></script>
+
+    <script src="scripts/platform.js"></script>
+    <script src="locales/zh.js"></script>
+    <script src="locales/en.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="scripts/script.js"></script>
+</body>
+
+</html>

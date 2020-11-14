@@ -1,0 +1,67 @@
+.face {
+    background: #666666;
+    /* clear: both; */
+    text-align: center;
+}
+
+.particles-js-canvas-el {
+    position: absolute;
+}
+
+.intro {
+    /* background-color: #0798ec; */
+    background-color: black;
+    color: white;
+}
+
+.ui.header {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 45px;
+    color: white;
+}
+
+body {
+    background: #f5f7fa;
+    color: white;
+}
+
+.ui.vertical.stripe.intro.segment {
+    background: #f5f7fa;
+}
+
+.row {
+    padding-top: 120px;
+    padding-bottom: 50px;
+}
+
+.following.bar>.menu .item {
+    transition: all 0.5s ease;
+}
+
+.following.bar {
+    position: fixed;
+    top: 0px;
+    z-index: 900;
+    left: 0%;
+    padding: 0.7em 0em;
+    width: 100%;
+    box-shadow: 0px 0px 0px 0px transparent;
+    /* border-bottom: 1px solid transparent; */
+    transition: padding 0.5s ease, background 0.5s ease, box-shadow 0.5s ease, border 0.5s ease;
+    /* height: 90px; */
+    transition: all 0.5s ease;
+    /* background-color: #666666 */
+}
+
+.light.fixed {
+    background-color: #666666;
+}
+
+.ui.dropdown .menu>.item {
+    min-height: unset !important;
+}
+
+.ui.labeled.icon.button>.icon, .ui.labeled.icon.buttons>.button>.icon {
+    height: unset !important;
+}
