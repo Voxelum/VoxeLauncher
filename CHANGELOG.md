@@ -40,6 +40,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
+
+
+## [0.12.2](https://github.com/voxelum/x-minecraft-launcher/compare/v0.12.1...v0.12.2)
+
+* fix: update ru.json (#123) ([eb69a84](https://github.com/voxelum/x-minecraft-launcher/commit/eb69a84)), closes [#123](https://github.com/voxelum/x-minecraft-launcher/issues/123)
+
+
 ## [0.12.1](https://github.com/voxelum/x-minecraft-launcher/compare/v0.12.0...v0.12.1)
 
 * fix: respect resource packs to export cf ([bf0a121](https://github.com/voxelum/x-minecraft-launcher/commit/bf0a121))
